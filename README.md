@@ -44,7 +44,7 @@ HEAD [Most Recently Used] ←→ [B] ←→ [A] [Least Recently Used] TAIL
 
 ### Code
 
-> 📎 [View LRU Cache Implementation →](https://github.com/your-username/your-repo/blob/main/lru_cache.py)
+> 📎 [View LRU Cache Implementation →]([https://github.com/your-username/your-repo/blob/main/lru_cache.py](https://github.com/Dhanyatha-s/Assignment-for-AI-Guruvai-Sciences/blob/main/lru_cache_implememtation.py))
 
 ---
 
@@ -79,7 +79,7 @@ Both functions: **Time O(n log n)** — sorting dominates. O(n log n) is optimal
 
 ### Code
 
-> 📎 [View Event Scheduler Implementation →](https://github.com/your-username/your-repo/blob/main/event_scheduler.py)
+> 📎 [View Event Scheduler Implementation →]([https://github.com/your-username/your-repo/blob/main/event_scheduler.py](https://github.com/Dhanyatha-s/Assignment-for-AI-Guruvai-Sciences/blob/main/even_scheduler.py))
 
 ---
 
