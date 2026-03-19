@@ -1,32 +1,159 @@
-﻿# Assignment-for-AI-Guruvai-Sciences
+# Data Structures & Systems Design — SE/ AI ENgineer - AI Agentic System Intern Assessment
 
-Problem 1: LRU Cache Implementation
+**Name:** Dhanyatha S
+**Email:** dhanyatha237.y@gmail.com
 
+---
 
-Implement a Least Recently Used (LRU) Cache with the following operations:
-get(key): Returns the value associated with the key if it exists, otherwise returns -1. This operation must mark the key as recently used.
-put (key, value): Adds or updates the key-value pair. If the cache is at capacity, it must evict the least recently used item before adding the new one.
-Requirements:
-Both get and put operations must run in $O(1)$ time complexity.
-The cache has a fixed capacity set during initialization.
-In your own words: Explain why you chose your specific data structures to achieve $O(1)$ performance.
+## Problem 1: LRU Cache Implementation
 
+### Problem
 
-Problem 2: Event Scheduler
+Consider a browser that can only hold **3 tabs** in memory at once. When a 4th tab opens, it closes whichever tab has gone unused the longest — the **Least Recently Used** tab.
 
+### Requirements
 
-You are designing a scheduling system for a meeting platform. Given a list of events represented as (start time, end time) tuples, implement the following:
-can_attend_all(events): Returns True if a person can attend all events without overlaps, False otherwise.
-min_rooms_required(events): Returns the minimum number of meeting rooms required to schedule all events simultaneously.
-Constraints:
-Input format: [(9, 10), (10, 11), (11, 12)].
-Adjacent events (where an end time equals a start time) are not considered overlaps.
-In your own words: Explain the algorithmic logic behind your room requirement calculation.
+| # | Operation | Behaviour |
+|---|-----------|-----------|
+| 1 | `get(key)` | Return the value if found, else `-1`. Mark as recently used. |
+| 2 | `put(key, value)` | Add or update the key-value pair. |
+| 3 | Eviction | If at capacity, evict the least recently used item first. |
+| 4 | **Critical** | Both `get` and `put` must run in **O(1)** time. |
 
+### Solution
 
-Final Discussion & Analysis
-Please include a response to the following:
-Time & Space Complexity: Provide an analysis for all functions implemented in both problems.
-Trade-offs: Why are a combination of a hash map and a doubly linked list often used for an LRU cache? 
-Future Proofing: How would you modify your scheduler to assign specific room numbers (e.g., "Room A", "Room B") to each event? 
-Concurrency: What changes would be required to make the LRU Cache thread-safe?
+A naive approach (array or single structure) requires O(n) to search or reorder nodes. The optimal solution combines **two structures**:
+
+| Structure | Role |
+|-----------|------|
+| **HashMap** | Instant O(1) key lookup — no searching |
+| **Doubly Linked List** | Tracks usage order and allows O(1) removal from any position |
+
+```
+HEAD [Most Recently Used] ←→ [B] ←→ [A] [Least Recently Used] TAIL
+```
+
+- `get(key)` → HashMap finds the node instantly → move it to the front
+- `put(key, value)` → Insert at front → if over capacity, remove from tail
+
+**Why neither works alone:**
+- HashMap alone → no ordering, cannot identify LRU
+- Linked List alone → O(n) to find a key by scanning
+
+**Together** → HashMap handles fast lookup, Doubly Linked List handles ordering and eviction — both O(1).
+
+### Code
+
+> 📎 [View LRU Cache Implementation →](https://github.com/your-username/your-repo/blob/main/lru_cache.py)
+
+---
+
+## Problem 2: Event Scheduler
+
+### Problem
+
+Design a scheduling system for a meeting platform that can:
+1. Check if **one person** can attend all meetings without time conflicts
+2. Find the **minimum number of rooms** needed to run all meetings simultaneously
+
+### Requirements
+
+| Function | Behaviour |
+|----------|-----------|
+| `can_attend_all(events)` | `True` if no overlaps, `False` otherwise |
+| `min_rooms_required(events)` | Returns minimum concurrent rooms needed |
+
+> **Note:** Adjacent events where `end_time == next start_time` are **not** considered overlaps.
+
+### Solution
+
+**`can_attend_all`** — Sort events by start time, then do one linear pass checking each consecutive pair. If any event starts before the previous one ends → overlap → return `False`.
+
+**`min_rooms_required`** — Use a **min-heap** storing end times of active meetings. For each new meeting:
+- If the earliest-ending meeting has already finished → reuse that room (pop heap)
+- Otherwise → allocate a new room (push to heap)
+
+The **peak heap size** = minimum rooms required.
+
+Both functions: **Time O(n log n)** — sorting dominates. O(n log n) is optimal because comparing events requires time order, and comparison-based sorting cannot do better.
+
+### Code
+
+> 📎 [View Event Scheduler Implementation →](https://github.com/your-username/your-repo/blob/main/event_scheduler.py)
+
+---
+
+## Final Discussion & Analysis
+
+### 1. Time & Space Complexity
+
+#### LRU Cache
+
+| Function | Time | Space | Why |
+|----------|------|-------|-----|
+| `get(key)` | O(1) | O(1) | HashMap lookup + 2 pointer rewires |
+| `put(key, value)` | O(1) | O(1) | Insert at front, remove tail if needed — no loops |
+| `_remove(node)` | O(1) | O(1) | Rewires `prev.next` and `next.prev` — fixed operations |
+| Overall storage | — | O(capacity) | HashMap + list are both bounded by capacity |
+
+#### Event Scheduler
+
+| Function | Time | Space | Why |
+|----------|------|-------|-----|
+| `can_attend_all` | O(n log n) | O(n) | Sort + one linear pass; space for sorted copy |
+| `min_rooms_required` | O(n log n) | O(n) | Sort + n heap push/pops at O(log n) each; heap holds at most n end times |
+
+---
+
+### 2. Trade-offs: HashMap + Doubly Linked List
+
+| Structure | Lookup | Order tracking | Eviction |
+|-----------|--------|---------------|----------|
+| HashMap alone | O(1) | ✗ Not possible | ✗ Must scan all entries |
+| Linked List alone | O(n) scan | O(1) | O(1) |
+| **HashMap + DLL** | **O(1)** | **O(1)** | **O(1)** |
+
+Key point: a **doubly** linked list is required (not singly) because removing a node needs a reference to its previous node — which only a doubly linked list provides in O(1).
+
+---
+
+### 3. Future Proofing — Assigning Room Names
+
+The current implementation counts rooms. To assign names like `"Room A"`, `"Room B"`:
+
+1. **Pool** — maintain a queue of available room names: `["Room A", "Room B", ...]`
+2. **Heap** — store `(end_time, room_name)` pairs instead of just end times; when a meeting ends, its room name returns to the pool
+3. **Record** — store `event → room_name` in a dictionary for lookup
+
+No change to time complexity — still O(n log n).
+
+---
+
+### 4. Concurrency — Making LRU Cache Thread-Safe
+
+The current implementation is **not thread-safe**. Two threads calling `get()` or `put()` simultaneously can corrupt the linked list (e.g. both writing to `head.next` at once).
+
+**Three approaches:**
+
+| Approach | How | Trade-off |
+|----------|-----|-----------|
+| Coarse lock *(recommended)* | Wrap `get()` and `put()` in `threading.Lock()` | Simple and correct; one thread at a time |
+| Read-write lock | Separate read/write locks | Better throughput, but `get()` still mutates order so benefit is limited |
+| Fine-grained / sharded | Split cache into N shards, each with its own lock | High throughput, complex to implement |
+
+**Simplest correct implementation:**
+
+```python
+import threading
+
+# in __init__:
+self.lock = threading.Lock()
+
+# in get() and put():
+with self.lock:
+    # existing logic
+```
+
+---
+
+*Assessment submission — Dhanyatha S*
